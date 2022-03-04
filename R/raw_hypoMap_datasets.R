@@ -5,6 +5,7 @@
 
 library(Seurat)
 library(dplyr)
+library(scUtils)
 
 ###
 hypomap_data_dir = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/"

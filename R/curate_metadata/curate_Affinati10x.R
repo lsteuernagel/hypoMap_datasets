@@ -14,6 +14,7 @@
 
 library(dplyr)
 library(Seurat)
+library(scUtils)
 
 ## read raw file and extract metadata
 Affinati10x_raw_data_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/Affinati10x/"
@@ -26,7 +27,7 @@ Affinati10x_seurat_author_meta = data.table::fread("/beegfs/scratch/bruening_scr
 Affinati10x_seurat_raw_meta$Barcode = stringr::str_extract(Affinati10x_seurat_raw_meta$Cell_ID,pattern = "[ACGT]+\\-[0-9]")
 Affinati10x_seurat_author_meta$Barcode = stringr::str_extract(Affinati10x_seurat_author_meta$ID,pattern = "[ACGT]+\\-[0-9]")
 # match samples and join
-matched_Sample_names = match_sample_names(table_A = Affinati10x_seurat_author_meta,table_B = Affinati10x_seurat_raw_meta,sample_col_A = "Sample",sample_col_B = "Run_ID",barcode_col = "Barcode")
+matched_Sample_names = scUtils::match_sample_names(table_A = Affinati10x_seurat_author_meta,table_B = Affinati10x_seurat_raw_meta,sample_col_A = "Sample",sample_col_B = "Run_ID",barcode_col = "Barcode")
 
 ##########
 ### Curate metadata sample level
@@ -73,7 +74,7 @@ Affinati10x_seurat_meta = dplyr::left_join(Affinati10x_seurat_meta,Affinati10x_s
 ##########
 
 # infer sex
-Affinati10x_seurat_meta$inferred_sex = infer_sex(Affinati10x_seurat_raw,sample_column="Run_ID",id_column="Cell_ID",min_xist_female = 0.7,max_xist_male = 0.1)
+Affinati10x_seurat_meta$inferred_sex = scUtils::infer_sex(Affinati10x_seurat_raw,sample_column="Run_ID",min_xist_female = 0.7,max_xist_male = 0.1)
 
 # curate some sample ids
 Affinati10x_seurat_meta$Sample_ID = paste0("Affinati10x_",Affinati10x_seurat_meta$Sample)
@@ -92,7 +93,7 @@ data.table::fwrite(per_sample_summary,file = paste0(Affinati10x_raw_data_path,"A
 
 ## make final sorting and selection of columns
 Affinati10x_seurat_meta_final = Affinati10x_seurat_meta %>%
-  dplyr::select(Cell_ID,Dataset,SRA_ID = Run_ID, Sample_ID, GEO_ID = `Sample Name`, Run10x = Run,Technology,Strain,Diet,Pooled,Age,Author_Region=tissue,inferred_sex, nCount_RNA, nFeature_RNA,Author_Exclude,Author_Class,Author_CellType  ) %>%
+  dplyr::select(Cell_ID,Dataset,SRA_ID = Run_ID, Sample_ID, GEO_ID = `Sample Name`, Run10x = Run,Technology,Strain,Diet,Pooled,Age,Author_Region=tissue,inferred_sex, nCount_RNA, nFeature_RNA,percent_mt = percent.mt,Author_Exclude,Author_Class,Author_CellType  ) %>%
   as.data.frame()
 rownames(Affinati10x_seurat_meta_final) = Affinati10x_seurat_meta_final$Cell_ID
 

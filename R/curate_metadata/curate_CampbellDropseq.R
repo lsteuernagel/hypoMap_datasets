@@ -11,6 +11,7 @@
 
 library(dplyr)
 library(Seurat)
+library(scUtils)
 
 ## read raw file and extract metadata
 CampbellDropseq_raw_data_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/CampbellDropseq/"
@@ -50,7 +51,7 @@ CampbellDropseq_seurat_author_meta$Pooled ="Yes"
 CampbellDropseq_seurat_author_meta$Author_Region =  "Arcuate Nucleus/Median Eminence"
 
 ## check v1 metadata for diet and age:
-matched_Sample_names_v1 = match_sample_names(table_A = CampbellDropseq_seurat_author_meta,table_B = hypoMap_neurons_v1_curated_metadata,sample_col_A = "Author_Sample",sample_col_B = "Diet",barcode_col = "Barcode",min_pct = 0.1)
+matched_Sample_names_v1 = scUtils::match_sample_names(table_A = CampbellDropseq_seurat_author_meta,table_B = hypoMap_neurons_v1_curated_metadata,sample_col_A = "Author_Sample",sample_col_B = "Diet",barcode_col = "Barcode",min_pct = 0.1)
 CampbellDropseq_seurat_author_meta$Diet = CampbellDropseq_seurat_author_meta$`5.Diet`
 CampbellDropseq_seurat_author_meta$Diet[CampbellDropseq_seurat_author_meta$Diet=="Chow"] = "Normal chow"
 CampbellDropseq_seurat_author_meta$Diet[CampbellDropseq_seurat_author_meta$Diet=="Ch10"] = "Normal chow"
@@ -59,7 +60,7 @@ CampbellDropseq_seurat_author_meta$Diet[CampbellDropseq_seurat_author_meta$Diet=
 CampbellDropseq_seurat_author_meta$Diet[CampbellDropseq_seurat_author_meta$Diet=="HFD"] = "HFD_1week"
 
 ## check v1 metadata for age:
-matched_Sample_names_v1 = match_sample_names(table_A = CampbellDropseq_seurat_author_meta,table_B = hypoMap_neurons_v1_curated_metadata,sample_col_A = "Author_Sample",sample_col_B = "Age",barcode_col = "Barcode",min_pct = 0.1)
+matched_Sample_names_v1 = scUtils::match_sample_names(table_A = CampbellDropseq_seurat_author_meta,table_B = hypoMap_neurons_v1_curated_metadata,sample_col_A = "Author_Sample",sample_col_B = "Age",barcode_col = "Barcode",min_pct = 0.1)
 CampbellDropseq_seurat_author_meta$Age= "6+ weeks"
 CampbellDropseq_seurat_author_meta$Age[CampbellDropseq_seurat_author_meta$Author_Sample %in% c("b1_Chow_M","b2_Chow_M","b3_Chow_M")] = "3-6 weeks"
 
@@ -90,7 +91,7 @@ table(CampbellDropseq_seurat_author_meta$Author_Class)
 ##########
 
 # match samples and join
-matched_Sample_names = match_sample_names(table_A = CampbellDropseq_seurat_author_meta,table_B = CampbellDropseq_seurat_raw_meta,sample_col_A = "Author_Sample",sample_col_B = "Run_ID",barcode_col = "Barcode",min_pct = 0.1)
+matched_Sample_names = scUtils::match_sample_names(table_A = CampbellDropseq_seurat_author_meta,table_B = CampbellDropseq_seurat_raw_meta,sample_col_A = "Author_Sample",sample_col_B = "Run_ID",barcode_col = "Barcode",min_pct = 0.1)
 # add RUN_IDs via matched samples
 CampbellDropseq_seurat_author_meta = dplyr::left_join(CampbellDropseq_seurat_author_meta,matched_Sample_names,by=c("Author_Sample"="Samples_A")) %>% dplyr::rename(Run_ID = Samples_B)
 # reduce to per sample
@@ -125,9 +126,7 @@ message("nrow CampbellDropseq_seurat_meta: ",nrow(CampbellDropseq_seurat_meta),"
 ##########
 
 # infer sex
-CampbellDropseq_seurat_meta$inferred_sex = infer_sex(CampbellDropseq_seurat_raw,sample_column="Run_ID",id_column="Cell_ID",min_xist_female = 0.7,max_xist_male = 0.1)
-table(CampbellDropseq_seurat_meta$`4.sex`,CampbellDropseq_seurat_meta$inferred_sex)
-table(CampbellDropseq_seurat_meta$`11.Sex_pred`,CampbellDropseq_seurat_meta$inferred_sex)
+CampbellDropseq_seurat_meta$inferred_sex = scUtils::infer_sex(CampbellDropseq_seurat_raw,sample_column="Run_ID",min_xist_female = 0.7,max_xist_male = 0.1)
 
 # curate some sample ids
 CampbellDropseq_seurat_meta$Sample_ID = paste0("CampbellDropseq_",CampbellDropseq_seurat_meta$Author_Sample)
@@ -146,7 +145,7 @@ data.table::fwrite(per_sample_summary,file = paste0(CampbellDropseq_raw_data_pat
 
 ## make final sorting and selection of columns
 CampbellDropseq_seurat_meta_final = CampbellDropseq_seurat_meta %>%
-  dplyr::select(Cell_ID,Dataset,SRA_ID = Run_ID, Sample_ID, GEO_ID = `Sample Name`, Run10x = Run,Technology,Strain,Diet,Pooled,Age,Author_Region=tissue,inferred_sex, nCount_RNA, nFeature_RNA,Author_Exclude,Author_Class,Author_CellType  ) %>%
+  dplyr::select(Cell_ID,Dataset,Author_Batch,SRA_ID = Run_ID, Sample_ID, GEO_ID = `Sample Name`,Technology,Strain=Strain.x,Diet,Pooled,Age,Author_Region,inferred_sex, nCount_RNA, nFeature_RNA,percent_mt = percent.mt,Author_Exclude,Author_Class,Author_CellType  ) %>%
   as.data.frame()
 rownames(CampbellDropseq_seurat_meta_final) = CampbellDropseq_seurat_meta_final$Cell_ID
 
@@ -158,3 +157,5 @@ if(nrow(CampbellDropseq_seurat_meta_final) == ncol(CampbellDropseq_seurat_raw)){
   message("metdata does not contain the same number of cells as raw seurat !")
 }
 
+# CampbellDropseq_seurat_PROCESS = scUtils::seurat_recipe(CampbellDropseq_seurat_raw,calcUMAP = TRUE,nfeatures_vst=1000)
+# DimPlot(CampbellDropseq_seurat_PROCESS,group.by = "Author_CellType")
