@@ -37,6 +37,7 @@ Kim10x_seurat_raw_meta$Sex = Kim10x_seurat_raw_meta$sex_label
 Kim10x_seurat_raw_meta$Age = "6+ weeks"
 Kim10x_seurat_raw_meta$Diet = "Normal chow"
 Kim10x_seurat_raw_meta$Strain = "C57Bl/6N"
+Kim10x_seurat_raw_meta$Pooled = "yes"
 
 # author cell type
 Kim10x_seurat_raw_meta$Author_CellType = Kim10x_seurat_raw_meta$cell_cluster_label
@@ -66,16 +67,53 @@ Kim10x_seurat_raw_meta$Author_Condition = paste0(Kim10x_seurat_raw_meta$behavior
 table(Kim10x_seurat_raw_meta$Author_Condition)
 
 # author exclusion
-Kim10x_seurat_raw_meta$Author_exclude = "no"
-Kim10x_seurat_raw_meta$Author_exclude[grepl("Doublet",Kim10x_seurat_raw_meta$Author_CellType) | is.na(Kim10x_seurat_raw_meta$Author_CellType)] = "yes"
+Kim10x_seurat_raw_meta$Author_Exclude = "no"
+Kim10x_seurat_raw_meta$Author_Exclude[grepl("Doublet",Kim10x_seurat_raw_meta$Author_CellType) | is.na(Kim10x_seurat_raw_meta$Author_CellType)] = "yes"
 
+Kim10x_seurat_meta = Kim10x_seurat_raw_meta
 
+# infer sex
+Kim10x_seurat_meta$inferred_sex = scUtils::infer_sex(Kim10x_seurat_raw,sample_column="orig.ident.x",min_xist_female = 0.7,max_xist_male = 0.1)
 
+##########
+### Save updated version
+##########
 
+## save per sample summary of metadata
+per_sample_summary = Kim10x_seurat_meta %>% dplyr::distinct(Sample_ID,.keep_all = TRUE) %>% dplyr::select(-umis_label,-genes_label,-Author_exclude,-barcode,-sample_name,-Cell_ID,-orig.ident.x,-orig.ident.y,-cell_cluster_id,-cell_cluster_label,-cell_cluster_color,-neuron_cluster_id,
+                                                                                                          -neuron_cluster_label,-neuron_cluster_color,-VMH_neuron_cluster_id,-VMH_neuron_cluster_label,-VMH_neuron_cluster_color,-VMH_neuron_cca_cluster_id,-VMH_neuron_cca_cluster_label,-VMH_neuron_cca_cluster_color,-Author_CellType,-Cell_ID,-Author_Class,-nCount_RNA,-percent.mt,-nFeature_RNA)
+data.table::fwrite(per_sample_summary,file = paste0(Kim10x_raw_data_path,"Kim10x_per_sample_summary.tsv"),sep = "\t")
 
+## make final sorting and selection of columns
+Kim10x_seurat_meta_final = Kim10x_seurat_meta %>%
+  dplyr::select(Cell_ID,Dataset, Sample_ID, Technology,Strain,Diet,Pooled,Age,Author_Region, inferred_sex, Sex,Author_Condition, nCount_RNA, nFeature_RNA,percent_mt = percent.mt,Author_Class,Author_CellType,Author_Exclude) %>%
+  as.data.frame()
+rownames(Kim10x_seurat_meta_final) = Kim10x_seurat_meta_final$Cell_ID
 
+## overwrite raw rds object
+if(nrow(Kim10x_seurat_meta_final) == ncol(Kim10x_seurat_raw)){
+  Kim10x_seurat_raw@meta.data = Kim10x_seurat_meta_final
+  saveRDS(Kim10x_seurat_raw,paste0(Kim10x_raw_data_path,"Kim10x_seurat_raw.rds"))
+}else{
+  message("metdata does not contain the same number of cells as raw seurat !")
+}
+
+##########
+### Save subset version
+##########
 
 # use only the ones not drom reisdent intruder assay :
-# Control_Exp_Single, Control_F_Naive_Group, Plain_F_Naive_Group , Plain_Naive_Group
+# Control_Exp_Single, Control_F_Naive_Group, Plain_F_Naive_Group , Plain_Naive_Group#
+
+# also remove low quality and doublets here to reduce size
+
+##### Subset !
+
+Kim10x_seurat_subset = subset(Kim10x_seurat_raw, subset = Author_Exclude == "no" & Author_Condition %in% c("Control_Exp_Single","Control_F_Naive_Group","Plain_F_Naive_Group","Plain_Naive_Group"))
+Kim10x_seurat_subset
+
+saveRDS(Kim10x_seurat_raw,paste0(Kim10x_raw_data_path,"Kim10x_seurat_subset.rds"))
+
+
 
 

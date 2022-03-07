@@ -61,7 +61,7 @@ for(dataset_table in all_sra_tables){
   # merge seurat objects:
   dataset_seurat <- merge(all_run_seurats[[1]], y = all_run_seurats[2:length(all_run_seurats)], project = dataset_grep)
   # add mt
-  dataset_seurat[["percent.mt"]] <- PercentageFeatureSet(dataset_seurat, pattern = "^mt-")
+  dataset_seurat[["percent.mt"]] <- Seurat::PercentageFeatureSet(dataset_seurat, pattern = "^mt-")
   ## add metadata from sra run table
   sra_table_toadd = sra_table[,!colnames(sra_table) %in% ignore_cols]
   meta_temp = dplyr::left_join(dataset_seurat@meta.data,sra_table_toadd,by=c("Run_ID"="Run")) %>% dplyr::select(-orig.ident) %>% as.data.frame()
