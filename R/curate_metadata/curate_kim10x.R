@@ -107,12 +107,14 @@ if(nrow(Kim10x_seurat_meta_final) == ncol(Kim10x_seurat_raw)){
 
 # also remove low quality and doublets here to reduce size
 
+# I manually copied the non-subsetted objects to a backup : Kim10x_seurat_raw_original.rds
+
 ##### Subset !
 
 Kim10x_seurat_subset = subset(Kim10x_seurat_raw, subset = Author_Exclude == "no" & Author_Condition %in% c("Control_Exp_Single","Control_F_Naive_Group","Plain_F_Naive_Group","Plain_Naive_Group"))
 Kim10x_seurat_subset
 
-saveRDS(Kim10x_seurat_raw,paste0(Kim10x_raw_data_path,"Kim10x_seurat_subset.rds"))
+saveRDS(Kim10x_seurat_subset,paste0(Kim10x_raw_data_path,"Kim10x_seurat_raw.rds"))
 
 
 
