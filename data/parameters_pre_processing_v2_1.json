@@ -1,0 +1,23 @@
+{
+  "data_path": "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/",
+  "processed_suffix": "_seurat_processed",
+  "n_cores": 50,
+  "id_column": "Cell_ID",
+  "global_seed": 123456,
+  "minUMI": 1000,
+  "minFeatures": 500,
+  "maxUMI": "Inf",
+  "maxUMI_dynamic": 20,
+  "max_mt": 10,
+  "genes_to_exclude_file": "data/features_exclude_list.json",
+  "min_cells_sample": 100,
+  "sample_column": "Sample_ID",
+  "nfeatures_vst_prelim": 1000,
+  "npcs_PCA": 70,
+  "k_param": 30,
+  "resolutions_to_try": [0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  "pN_fixed": 0.25,
+  "pK_max": 0.1,
+  "doublet_cluster_tresh": 0.5,
+  "min_avg_cells_cluster": 200
+}

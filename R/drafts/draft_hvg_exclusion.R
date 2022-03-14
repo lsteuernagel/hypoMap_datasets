@@ -63,6 +63,6 @@ features_exclude_list = list(
 scUtils::writeList_to_JSON(features_exclude_list,filename = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap/features_exclude_list.json")
 
 ##
-features_exclude_list=jsonlite::read_json("/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap/features_exclude_list.json")
+features_exclude_list=jsonlite::read_json("/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap/features_exclude_longx.json")
 features_exclude_list=sapply(features_exclude_list,unlist)
 
