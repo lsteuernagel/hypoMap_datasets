@@ -23,6 +23,6 @@
   "trees_rf": 20000,
   "pN_fixed": 0.25,
   "pK_max": 0.1,
-  "doublet_cluster_tresh": 0.5,
+  "doublet_cluster_tresh": 0.7,
   "min_avg_cells_cluster": 200
 }

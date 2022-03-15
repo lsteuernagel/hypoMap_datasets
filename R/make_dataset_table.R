@@ -38,6 +38,9 @@ data_set_table$exclude_author[data_set_table$Dataset == "Moffit10x"] = TRUE
 data_set_table$doublet_formation_rate = 0.05
 data_set_table$doublet_formation_rate[data_set_table$Dataset == "Dowsett10xnuc"] = 0.02
 data_set_table$doublet_formation_rate[data_set_table$Dataset == "Kim10x"] = 0.02
+#also some of the maller ones:
+data_set_table$doublet_formation_rate[data_set_table$Dataset == "kimDev10x"] = 0.02
+data_set_table$doublet_formation_rate[data_set_table$Dataset == "LeeDropseq"] = 0.02
 #data.table::fread("/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/")
 
 # save

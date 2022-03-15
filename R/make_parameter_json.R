@@ -35,7 +35,7 @@ param_list$trees_rf = 20000
 # doublet
 param_list$pN_fixed = 0.25 # this can be the same globally
 param_list$pK_max = 0.1 #  this can be the same globally
-param_list$doublet_cluster_tresh = 0.5 # this can be the same globally
+param_list$doublet_cluster_tresh = 0.7 # this can be the same globally
 param_list$min_avg_cells_cluster = 200 # to avoid accientally overclustering small datasets all cluster should have on average this number of cells, so if target_cluster_number = 50 --> 10000 cells required, else target_cluster_number will be scaled down.
 
 # save

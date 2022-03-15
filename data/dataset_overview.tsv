@@ -6,8 +6,8 @@ ChenDropseq/ChenDropseq_seurat_raw.rds	ChenDropseq	76	FALSE	0.05
 Dowsett10xnuc/Dowsett10xnuc_seurat_raw.rds	Dowsett10xnuc	90	TRUE	0.02
 Flynn10x/Flynn10x_seurat_raw.rds	Flynn10x	41	FALSE	0.05
 Kim10x/Kim10x_seurat_raw.rds	Kim10x	72	TRUE	0.02
-kimDev10x/kimDev10x_seurat_raw.rds	kimDev10x	19	FALSE	0.05
-LeeDropseq/LeeDropseq_seurat_raw.rds	LeeDropseq	48	FALSE	0.05
+kimDev10x/kimDev10x_seurat_raw.rds	kimDev10x	19	FALSE	0.02
+LeeDropseq/LeeDropseq_seurat_raw.rds	LeeDropseq	48	FALSE	0.02
 Mickelsen10x/Mickelsen10x_seurat_raw.rds	Mickelsen10x	43	FALSE	0.05
 Moffit10x/Moffit10x_seurat_raw.rds	Moffit10x	64	TRUE	0.05
 Morris10x/Morris10x_seurat_raw.rds	Morris10x	50	FALSE	0.05

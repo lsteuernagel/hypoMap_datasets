@@ -28,7 +28,7 @@ features_exclude_list= unlist(jsonlite::read_json(parameter_list$genes_to_exclud
 message(" Load datasets ")
 
 # get all files
-all_processed_files = list.files(parameter_list$data_path,pattern = parameter_list$processed_suffix,full.names = TRUE)
+all_processed_files = list.files(parameter_list$data_path,pattern = parameter_list$processed_suffix,full.names = TRUE,recursive = TRUE)
 
 # load all files
 all_processed_seurats = lapply(all_processed_files, readRDS)
