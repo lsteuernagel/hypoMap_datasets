@@ -9,14 +9,14 @@ message(" Load parameters and packages ")
 
 library(magrittr)
 library(scUtils)
-library(scUtils)
 
 # get params-filename from commandline
 command_args<-commandArgs(TRUE)
 param_file = command_args[1]
 # read all parameters and filepaths
-#parameter_list = readRDS(file=paramfile_name)
 parameter_list = jsonlite::read_json(param_file)
+# if some fields are lists --> unlist
+parameter_list = lapply(parameter_list,function(x){if(is.list(x)){return(unlist(x))}else{return(x)}})
 
 # read features to exlude
 features_exclude_list= unlist(jsonlite::read_json(parameter_list$genes_to_exclude_file))
@@ -42,11 +42,11 @@ for(i in 1:length(seurat_object_batch_list)){
 
   current_seurat = seurat_object_batch_list[[i]]
   # remove features that should not be HVGs
-  keep_genes = rownames(current_seurat)[!rownames(current_seurat) %in% features_exclude_list]
-  current_seurat_new = CreateSeuratObject(current_seurat@assays$RNA@counts[keep_genes,],meta.data = current_seurat@meta.data)
+  #keep_genes = rownames(current_seurat)[!rownames(current_seurat) %in% features_exclude_list]
+  #current_seurat_new = CreateSeuratObject(current_seurat@assays$RNA@counts[keep_genes,],meta.data = current_seurat@meta.data)
 
   # run preprocessing for the current batch
-  seurat_processed = scUtils::seurat_recipe(current_seurat_new,
+  current_seurat = scUtils::seurat_recipe(current_seurat,
                                             nfeatures_vst = parameter_list$nfeatures_vst_prelim,
                                             sample_column = parameter_list$sample_column,
                                             normalize_data = TRUE,
@@ -60,8 +60,8 @@ for(i in 1:length(seurat_object_batch_list)){
                                             seed = parameter_list$global_seed)
 
   # run doublet detection
-  current_seurat_new = scUtils::apply_DoubletFinder( # scUtils::
-    seurat_object = current_seurat_new,
+  current_seurat = scUtils::apply_DoubletFinder( # scUtils::
+    seurat_object = current_seurat,
     npcs_PCA = parameter_list$npcs_PCA,
     pN_fixed = parameter_list$pN_fixed,
     pK_max = parameter_list$pK_max,
@@ -72,7 +72,7 @@ for(i in 1:length(seurat_object_batch_list)){
     return_seurat = TRUE
   )
   #current_seurat_new$Doublet = doublet_anno
-  seurat_object_batch_list[[i]] = current_seurat_new
+  seurat_object_batch_list[[i]] = current_seurat
 }
 
 ##########
@@ -80,7 +80,12 @@ for(i in 1:length(seurat_object_batch_list)){
 ##########
 
 message(" Add Doublet annotation ")
+all_doublets = lapply(seurat_object_batch_list,FUN = function(x,id_column){return(x@meta.data[,c(id_column,"Doublet")])},id_column = parameter_list$id_column)
+all_doublets = do.call(rbind,all_doublets)
+meta_temp = dplyr::left_join(seurat_processed@meta.data, all_doublets)
+rownames(meta_temp) = meta_temp[,parameter_list$id_column]
 
+seurat_processed@meta.data = meta_temp
 
 ##########
 ### save as processed file

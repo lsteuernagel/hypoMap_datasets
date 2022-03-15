@@ -13,8 +13,9 @@ library(scUtils)
 command_args<-commandArgs(TRUE)
 param_file = command_args[1]
 # read all parameters and filepaths
-#parameter_list = readRDS(file=paramfile_name)
 parameter_list = jsonlite::read_json(param_file)
+# if some fields are lists --> unlist
+parameter_list = lapply(parameter_list,function(x){if(is.list(x)){return(unlist(x))}else{return(x)}})
 
 # read features to exlude
 features_exclude_list= unlist(jsonlite::read_json(parameter_list$genes_to_exclude_file))

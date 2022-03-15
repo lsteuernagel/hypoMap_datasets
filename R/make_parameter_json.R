@@ -8,6 +8,10 @@ param_list$data_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoM
 param_list$processed_suffix = "_seurat_processed"
 #param_list$processed_data_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_processed/"
 
+# for final merged object:
+param_list$merged_name = "hypoMap_merged_raw"
+param_list$feature_set_sizes = c(750,1000,1250,1500,2000,2500,3000,4000) # TODO
+
 # processing
 param_list$n_cores = 50
 param_list$id_column = "Cell_ID"

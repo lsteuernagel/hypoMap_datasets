@@ -13,6 +13,9 @@ dataset_table = data.table::fread("data/dataset_overview.tsv",data.table = FALSE
 
 # load json file with all other information
 params_pre_processing = jsonlite::read_json("data/parameters_pre_processing_v2_1.json")
+# if some fields are lists --> unlist
+params_pre_processing = lapply(params_pre_processing,function(x){if(is.list(x)){return(unlist(x))}else{return(x)}})
+
 
 ### try to creat dir if necessary:
 system(paste0("mkdir -p ",paste0(param_path)))
@@ -60,7 +63,7 @@ for(i in 1:nrow(dataset_table)){
   param_set$raw_file = dataset_table$seurat_file[i]
   param_set$doublet_formation_rate = dataset_table$doublet_formation_rate[i] # or 0.075  --->for nExp_poi, this one might differ between datasets
   # make unique id:
-  job_id=digest(param_set)
+  job_id=digest::digest(param_set)
   # write to JSON as transfer file
   param_file = paste0(param_path,"doublet_detection_params_",job_id,".json")
   scUtils::writeList_to_JSON(list_with_rows = param_set,filename = param_file)
@@ -79,11 +82,10 @@ for(i in 1:nrow(dataset_table)){
 ### [3] Merge final result and run pre-processing+HVG detection, save as merged dataset ---> depends on all [2]
 ##########
 
-# TODO
-# .... param_set$
-# need: which feature sizes to add
-#   exclude_author = dataset_table$Dataset[i]
-
+# set params
+param_set = params_pre_processing
+# make unique id:
+job_id=digest::digest(param_set)
 # write to JSON as transfer file
 param_file = paste0(param_path,"merge_datasets_params_",job_id,".json")
 scUtils::writeList_to_JSON(list_with_rows = param_set,filename = param_file)
