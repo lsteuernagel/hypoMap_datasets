@@ -2,6 +2,9 @@
 ### [0] Load
 ##########
 
+source("R/functions.R")
+singularity_path = "~/Documents/r_scvi_v10.simg"
+
 # direct output and logs to some files on the local filesystem:
 # where to store temporary json's with params for jobs:
 param_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/slurm/hypoMap_v2_params/"
@@ -21,6 +24,8 @@ params_pre_processing = lapply(params_pre_processing,function(x){if(is.list(x)){
 system(paste0("mkdir -p ",paste0(param_path)))
 system(paste0("mkdir -p ",paste0(log_path)))
 
+dataset_table = dataset_table[dataset_table$Dataset %in% c("kimDev10x","LeeDropseq","wen10x","RomanovDev10x"),]
+
 ##########
 ### [1] Run pre-processing and batch id job for each dataset
 ##########
@@ -38,15 +43,16 @@ for(i in 1:nrow(dataset_table)){
   job_id=digest::digest(param_set)
   # write to JSON as transfer file
   param_file = paste0(param_path,"preprocessing_params_",job_id,".json")
-  scUtils::writeList_to_JSON(list_with_rows = param_set,filename = param_file)
+  writeList_to_JSON(list_with_rows = param_set,filename = param_file)
   # execute job
-  script_path = "run_scripts/preprocessing.R"
+  script_path = "R/run_scripts/preprocessing.R"
   # set sbatch params:
-  jobname = paste0("preprocessing_",dataset_name,"_",job_id)
+  jobname = paste0("preprocessing_",dataset_table$Dataset[i],"_",job_id)
   outputfile = paste0(log_path,jobname,"_","slurm-%j.out")
   errorfile = paste0(log_path,jobname,"_","slurm-%j.err")
   #run job
-  slurm_id_1_per_dataset[dataset_name] = system(paste0("sbatch -j ",jobid," -o ",outputfile," -e ",errorfile," bash/run_Rscript_slurm.sh ",singularity_path," ",script_path," ",param_path),intern = TRUE)
+  output_message = system(paste0("sbatch -J ",jobname," -o ",outputfile," -e ",errorfile," R/run_scripts/run_Rscript_slurm.sh ",singularity_path," ",script_path," ",param_file),intern = TRUE)
+  slurm_id_1_per_dataset[dataset_table$Dataset[i]] = stringr::str_remove(output_message,pattern = "Submitted batch job ")
 }
 
 
@@ -66,15 +72,16 @@ for(i in 1:nrow(dataset_table)){
   job_id=digest::digest(param_set)
   # write to JSON as transfer file
   param_file = paste0(param_path,"doublet_detection_params_",job_id,".json")
-  scUtils::writeList_to_JSON(list_with_rows = param_set,filename = param_file)
+  writeList_to_JSON(list_with_rows = param_set,filename = param_file)
   # execute job
-  script_path = "run_scripts/doublet_detection.R"
+  script_path = "R/run_scripts/doublet_detection.R"
   # set sbatch params:
-  jobname = paste0("doublet_detection_",dataset_name,"_",job_id)
+  jobname = paste0("doublet_detection_",dataset_table$Dataset[i],"_",job_id)
   outputfile = paste0(log_path,jobname,"_","slurm-%j.out")
   errorfile = paste0(log_path,jobname,"_","slurm-%j.err")
-  dependency_ids = slurm_id_1_per_dataset[dataset_name]
-  slurm_id_2_per_dataset[dataset_name] = system(paste0("sbatch -j ",jobid," -o ",outputfile," -e ",errorfile," --dependency=afterok:",dependency_ids," bash/run_Rscript_slurm.sh ",singularity_path," ",script_path," ",param_path),intern = TRUE)
+  dependency_ids = slurm_id_1_per_dataset[dataset_table$Dataset[i]]
+  output_message = system(paste0("sbatch -J ",jobname," -o ",outputfile," -e ",errorfile," --dependency=afterok:",dependency_ids," --kill-on-invalid-dep=yes R/run_scripts/run_Rscript_slurm.sh ",singularity_path," ",script_path," ",param_file),intern = TRUE)
+  slurm_id_2_per_dataset[dataset_table$Dataset[i]] = stringr::str_remove(output_message,pattern = "Submitted batch job ")
 }
 
 
@@ -88,14 +95,14 @@ param_set = params_pre_processing
 job_id=digest::digest(param_set)
 # write to JSON as transfer file
 param_file = paste0(param_path,"merge_datasets_params_",job_id,".json")
-scUtils::writeList_to_JSON(list_with_rows = param_set,filename = param_file)
+writeList_to_JSON(list_with_rows = param_set,filename = param_file)
 # not a loop
-script_path = "run_scripts/merge_datasets.R"
+script_path = "R/run_scripts/merge_datasets.R"
 # set sbatch params:
-jobname = paste0("merge_datasets_",dataset_name,"_",job_id)
+jobname = paste0("merge_datasets_",job_id)
 outputfile = paste0(log_path,jobname,"_","slurm-%j.out")
 errorfile = paste0(log_path,jobname,"_","slurm-%j.err")
 dependency_ids = paste0(slurm_id_2_per_dataset,collapse = ":")
-slurm_id_3 = system(paste0("sbatch -j ",jobid," -o ",outputfile," -e ",errorfile," --dependency=afterok:",dependency_ids," bash/run_Rscript_slurm.sh ",singularity_path," ",script_path," ",param_path),intern = TRUE)
+slurm_id_3 = system(paste0("sbatch -J ",jobname," -o ",outputfile," -e ",errorfile," --dependency=afterok:",dependency_ids," --kill-on-invalid-dep=yes R/run_scripts/run_Rscript_slurm.sh ",singularity_path," ",script_path," ",param_file),intern = TRUE)
 
 

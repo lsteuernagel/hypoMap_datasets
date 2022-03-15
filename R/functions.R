@@ -1,3 +1,12 @@
+
+writeList_to_JSON = function (list_with_rows, filename)
+{
+  jsonfile = jsonlite::toJSON(list_with_rows, pretty = TRUE,
+                              auto_unbox = TRUE, digits = NA)
+  writeLines(jsonfile, con = paste0(filename))
+}
+
+
 ##########
 ### function: identifyBatches
 ##########

@@ -9,6 +9,7 @@ message(" Load parameters and packages ")
 
 library(magrittr)
 library(scUtils)
+library(Seurat)
 
 # get params-filename from commandline
 command_args<-commandArgs(TRUE)
@@ -42,26 +43,27 @@ for(i in 1:length(seurat_object_batch_list)){
 
   current_seurat = seurat_object_batch_list[[i]]
   # remove features that should not be HVGs
-  #keep_genes = rownames(current_seurat)[!rownames(current_seurat) %in% features_exclude_list]
-  #current_seurat_new = CreateSeuratObject(current_seurat@assays$RNA@counts[keep_genes,],meta.data = current_seurat@meta.data)
+  keep_genes = rownames(current_seurat)[!rownames(current_seurat) %in% features_exclude_list]
+  current_seurat_new = Seurat::CreateSeuratObject(current_seurat@assays$RNA@counts[keep_genes,],meta.data = current_seurat@meta.data)
 
   # run preprocessing for the current batch
-  current_seurat = scUtils::seurat_recipe(current_seurat,
+  # we remove unwanted genes beforehand so that doublet fidner won't use them --> also exclude below
+  current_seurat_new = scUtils::seurat_recipe(current_seurat_new,
                                             nfeatures_vst = parameter_list$nfeatures_vst_prelim,
-                                            sample_column = parameter_list$sample_column,
+                                          #  sample_column = parameter_list$sample_column,
                                             normalize_data = TRUE,
-                                            remove_hvgs = TRUE,
-                                            genes_to_remove = features_exclude_list,
+                                            remove_hvgs = FALSE,
+                                         #   genes_to_remove = features_exclude_list,
                                             calcUMAP = FALSE,
                                             findClusters = TRUE,
                                             npcs_PCA = parameter_list$npcs_PCA,
                                             clusterRes = 1,
-                                            k.param = parameter_list$k_param
+                                            k.param = parameter_list$k_param,
                                             seed = parameter_list$global_seed)
 
   # run doublet detection
-  current_seurat = scUtils::apply_DoubletFinder( # scUtils::
-    seurat_object = current_seurat,
+  current_seurat_new = scUtils::apply_DoubletFinder( # scUtils::
+    seurat_object = current_seurat_new,
     npcs_PCA = parameter_list$npcs_PCA,
     pN_fixed = parameter_list$pN_fixed,
     pK_max = parameter_list$pK_max,
@@ -72,7 +74,7 @@ for(i in 1:length(seurat_object_batch_list)){
     return_seurat = TRUE
   )
   #current_seurat_new$Doublet = doublet_anno
-  seurat_object_batch_list[[i]] = current_seurat
+  seurat_object_batch_list[[i]] = current_seurat_new
 }
 
 ##########
@@ -86,6 +88,9 @@ meta_temp = dplyr::left_join(seurat_processed@meta.data, all_doublets)
 rownames(meta_temp) = meta_temp[,parameter_list$id_column]
 
 seurat_processed@meta.data = meta_temp
+
+# add to Exclude column
+seurat_processed@meta.data$Process_Exclude[seurat_processed@meta.data$Doublet %in% "Doublet"] = "yes"
 
 ##########
 ### save as processed file

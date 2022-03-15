@@ -8,6 +8,7 @@ message(" Load parameters and packages ")
 
 library(magrittr)
 library(scUtils)
+library(Seurat)
 
 # get params-filename from commandline
 command_args<-commandArgs(TRUE)
@@ -21,7 +22,7 @@ parameter_list = lapply(parameter_list,function(x){if(is.list(x)){return(unlist(
 features_exclude_list= unlist(jsonlite::read_json(parameter_list$genes_to_exclude_file))
 
 # load seurat
-seurat_raw = readRDS(paste0(parameter_list$raw_data_path,parameter_list$raw_file))
+seurat_raw = readRDS(paste0(parameter_list$data_path,parameter_list$raw_file))
 seurat_raw_meta = seurat_raw@meta.data
 
 ##########
@@ -29,10 +30,15 @@ seurat_raw_meta = seurat_raw@meta.data
 ##########
 message(" Basic QC ")
 
+# add exclude features
+#seurat_raw[["percent_exclude_features"]] <- Seurat::PercentageFeatureSet(seurat_raw,features=features_exclude_list[features_exclude_list %in% rownames(seurat_raw)])
+seurat_raw[["percent_exclude_features"]] <- Matrix::colSums(seurat_raw@assays$RNA@counts[features_exclude_list[features_exclude_list %in% rownames(seurat_raw)],]) / seurat_raw@meta.data$nCount_RNA
+
+
 # max umi
-maxUMI_use = min(median(seurat_raw@meta.data$nCount_RNA)*parameter_list$maxUMI_dynamic,parameter_list$maxUMI)
+maxUMI_use = as.numeric(min(median(seurat_raw@meta.data$nCount_RNA)*parameter_list$maxUMI_dynamic,parameter_list$maxUMI))
 # subset seurat:
-seurat_raw = subset(seurat_raw,subset = nCount_RNA < maxUMI_use & nCount_RNA > parameter_list$minUMI & nFeature_RNA > parameter_list$minFeatures & percent_mt < parameter_list$max_mt)
+seurat_raw = subset(seurat_raw,subset = nCount_RNA <= maxUMI_use & nCount_RNA >= parameter_list$minUMI & nFeature_RNA >= parameter_list$minFeatures & percent_mt <= parameter_list$max_mt)
 
 # if specified: exclude based on author annotation
 if(parameter_list$exclude_author & "Author_Exclude" %in% colnames(seurat_raw@meta.data)){
@@ -45,7 +51,7 @@ if(parameter_list$exclude_author & "Author_Exclude" %in% colnames(seurat_raw@met
 keep_samples=names(table(seurat_raw@meta.data[,parameter_list$sample_column]))[table(seurat_raw@meta.data[,parameter_list$sample_column]) > parameter_list$min_cells_sample]
 seurat_raw@meta.data$tmp_id = seurat_raw@meta.data[,parameter_list$sample_column]
 seurat_raw = subset(seurat_raw, subset = tmp_id %in% keep_samples)
-
+seurat_raw@meta.data = seurat_raw@meta.data[,!grepl("tmp_id",colnames(seurat_raw@meta.data))]
 
 ##########
 ### basic pre-processing
@@ -62,7 +68,7 @@ seurat_processed = scUtils::seurat_recipe(seurat_raw,
                                           findClusters = TRUE,
                                           npcs_PCA = parameter_list$npcs_PCA,
                                           clusterRes = 1,
-                                          k.param = parameter_list$k_param
+                                          k.param = parameter_list$k_param,
                                           seed = parameter_list$global_seed)
 
 # find best cluster resolution:
@@ -74,6 +80,19 @@ seurat_processed = scUtils::determine_cluster_resolution(seurat_object = seurat_
                                                          cluster_col_name = "preliminary_clusters",
                                                          return_seurat = TRUE,
                                                          seed = parameter_list$global_seed)
+# remove cluster resolutions and other unwanted columns:
+seurat_processed@meta.data = seurat_processed@meta.data[,!grepl("RNA_snn",colnames(seurat_processed@meta.data))]
+seurat_processed@meta.data = seurat_processed@meta.data[,!grepl("seurat_clusters",colnames(seurat_processed@meta.data))]
+
+## Mark clusters with very high features to exclude
+percent_exclude_features_per_cluster = data.frame(preliminary_clusters = names(tapply(seurat_processed@meta.data[,"percent_exclude_features"],INDEX = seurat_processed@meta.data[,"preliminary_clusters"],FUN = median)),pct_median = tapply(seurat_processed@meta.data[,"percent_exclude_features"],INDEX = seurat_processed@meta.data[,"preliminary_clusters"],FUN = median))
+clusters_with_high_pct = percent_exclude_features_per_cluster$preliminary_clusters[percent_exclude_features_per_cluster$pct_median >= parameter_list$max_pctExclude]
+seurat_processed@meta.data$Process_Exclude = "no"
+seurat_processed@meta.data$Process_Exclude[seurat_processed@meta.data$preliminary_clusters %in% clusters_with_high_pct] = "yes"
+
+## check cell cycle scoring:
+seurat_processed = Seurat::CellCycleScoring(seurat_processed,s.features = stringr::str_to_title(cc.genes$s.genes), g2m.features = stringr::str_to_title(cc.genes$g2m.genes))
+
 ##########
 ### Detect batches
 ##########
