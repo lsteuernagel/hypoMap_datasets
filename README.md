@@ -32,13 +32,36 @@ The input are the raw cellranger and dropseq tools files as well as tables from 
 /beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/
 ```
 
-This directory contains subdirectories for each dataset. Based on the table stored in
+This directory contains subdirectories for each dataset. 
 
-```
-/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/
-```
+The script "R/raw_hypoMap_datasets.R" loads all data and creates a "_seurat_raw.rds" file in each subdirectory containing all cells and metadata from SRA.
+Our own nucseq data is processed in an additional script in a similar way.
 
-which looks like this:
+## Curation of each dataset with Author metadata and information from publications where possible
+
+After creation of the seurat objects further metadata curation is required. For each dataset we add (if available) author annotations regarding both the samples as well as cells (cluster, passed-qc etc.). We curate on high lvele annotation: "Author_Class" using the same names across all datasets.
+After curation the "_seurat_raw.rds" file is overwritten with the updated data.
+
+See "R/curate_metadata/" for a script per dataset (requires adjustement of hardcoded filepaths!)
+
+TODO: Add more details on added columns like AUthor_Class
+
+## Execute processing pipeline
+
+The core script to execute the slurm jobs is "R/execute_hypoMap_datasets.R" which consists of 4 steps:
+
+- Load input data overview and parameters
+- Preprocessing
+- Doublet-detection
+- Merging
+
+Step 2-4 are called as slurm jobs that are dependent on the previous step. For each step the main script exports required parameters as a json file that will then be loaded by an R script which is called in an bash script ("R/run_scripts/run_Rscript_slurm.sh") that is executed by sbatch.
+
+### Input datasets
+
+Based on the table stored in [data/dataset_overview.tsv] datasets are loaded and processed. .
+
+It looks like this:
 
 | seurat_file                                      | Dataset          | estimated_total_clusters | exclude_author | doublet_formation_rate |
 |--------------------------------------------------|------------------|--------------------------|----------------|------------------------|
@@ -60,3 +83,52 @@ which looks like this:
 | Rupp10x/Rupp10x_seurat_raw.rds                   | Rupp10x          | 90                       | FALSE          | 0.05                   |
 | wen10x/wen10x_seurat_raw.rds                     | wen10x           | 21                       | FALSE          | 0.05                   |
 | wenDropseq/wenDropseq_seurat_raw.rds             | wenDropseq       | 61                       | FALSE          | 0.05                   |
+
+The (not-reproducible) script: [R/make_dataset_table.R] was used to build this table. We manually added estimations of expected clusters for the processing based on prior work.
+
+### Parameters
+
+The parameters are loaded from a json files that can be adjusted (or copied and edited). [R/make_parameter_json.R] can be used to create the json.
+
+For the hypoMap pipeline we used this parameter file: [data/parameters_pre_processing_v2_1.json] 
+
+It looks like this:
+
+```yaml
+{
+  "data_path": "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/",
+  "processed_suffix": "_seurat_processed",
+  "merged_name": "hypoMap_merged_raw",
+  "feature_set_sizes": [750, 1000, 1250, 1500, 2000, 2500, 3000, 4000],
+  "n_cores": 50,
+  "id_column": "Cell_ID",
+  "global_seed": 123456,
+  "minUMI": 1000,
+  "minFeatures": 500,
+  "maxUMI": 1000000,
+  "maxUMI_dynamic": 20,
+  "max_mt": 10,
+  "genes_to_exclude_file": "data/features_exclude_list.json",
+  "max_pctExclude": 40,
+  "min_cells_sample": 100,
+  "sample_column": "Sample_ID",
+  "nfeatures_vst_prelim": 1000,
+  "npcs_PCA": 70,
+  "k_param": 30,
+  "resolutions_to_try": [0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  "downsampling_max": 20000,
+  "max_entropy_batch_detection": 0.8,
+  "trees_rf": 20000,
+  "pN_fixed": 0.25,
+  "pK_max": 0.1,
+  "doublet_cluster_tresh": 0.7,
+  "min_avg_cells_cluster": 200
+}
+```
+
+TODO: Explain parameters.
+
+### Preprocessing
+
+lorem ipsum
+
