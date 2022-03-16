@@ -126,9 +126,11 @@ seurat_newbatches= identifyBatches(seurat_object = seurat_processed_downsampled,
                                    seed=parameter_list$global_seed)
 
 # get per sample_id table to map back onto full processed object:
-batch_id_to_sample_id = as.data.frame(table(seurat_processed_downsampled@meta.data[,parameter_list$sample_column],seurat_newbatches$new_batch))[,1:2]
-colnames(batch_id_to_sample_id) = c(parameter_list$sample_column,"Batch_ID")
+batch_id_to_sample_id = as.data.frame(table(seurat_processed_downsampled@meta.data[,parameter_list$sample_column],seurat_newbatches$new_batch))
+colnames(batch_id_to_sample_id)[1:2] = c(parameter_list$sample_column,"Batch_ID")[1:2]
 batch_id_to_sample_id$Batch_ID = paste0(parameter_list$dataset_name,"_",batch_id_to_sample_id$Batch_ID)
+batch_id_to_sample_id = batch_id_to_sample_id[batch_id_to_sample_id$Freq > 0,]
+batch_id_to_sample_id = batch_id_to_sample_id %>% dplyr::distinct(!!rlang::sym(parameter_list$sample_column),Batch_ID)
 #batch_ids = paste0(parameter_list$dataset_name,seurat_newbatches$new_batch)
 
 # add new batches
