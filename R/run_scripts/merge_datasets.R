@@ -45,16 +45,34 @@ merged_seurat = merge(x = all_processed_seurats[[1]],y = all_processed_seurats[2
 message(" Add variable features ")
 
 # normalize data
-seurat_object <- Seurat::NormalizeData(object = seurat_object,  verbose = F, assay = "RNA")
+merged_seurat <- Seurat::NormalizeData(object = merged_seurat,  verbose = F, assay = "RNA")
 
 # find HVGs
-seurat_object = scUtils::identify_variable_features(seurat_object,
+merged_seurat = scUtils::identify_variable_features(merged_seurat,
                                           n_hvgs_sizes = parameter_list$feature_set_sizes,
                                           batch_var = parameter_list$sample_column,
                                           assay_name = "RNA",
                                           method = "vst",
                                           ignore_genes_vector = features_exclude_list,
                                           returnSeurat = TRUE,
+                                          seed = parameter_list$global_seed)
+##########
+### Run basic processing (without integration)
+##########
+
+message(" Add basic processing ")
+
+merged_seurat = scUtils::seurat_recipe(merged_seurat,
+                                          nfeatures_vst = parameter_list$nfeatures_vst_prelim,
+                                          sample_column = "Batch_ID",
+                                          normalize_data = TRUE,
+                                          remove_hvgs = TRUE,
+                                          genes_to_remove = features_exclude_list,
+                                          calcUMAP = TRUE,
+                                          findClusters = TRUE,
+                                          npcs_PCA = parameter_list$npcs_PCA,
+                                          clusterRes = 2,
+                                          k.param = parameter_list$k_param,
                                           seed = parameter_list$global_seed)
 
 ##########
@@ -67,10 +85,10 @@ message(" Save merged file ")
 merged_file_name = paste0(parameter_list$data_path,parameter_list$merged_name)
 
 # save to rds
-saveRDS(seurat_object,file = paste0(merged_file_name,".rds"))
+saveRDS(merged_seurat,file = paste0(merged_file_name,".rds"))
 
 # save h5seurat
-SeuratDisk::SaveH5Seurat(object = seurat_object,filename = paste0(merged_file_name,".h5seurat"), overwrite = TRUE, verbose = TRUE)
+SeuratDisk::SaveH5Seurat(object = merged_seurat,filename = paste0(merged_file_name,".h5seurat"), overwrite = TRUE, verbose = TRUE)
 
 # save to anndata
 SeuratDisk::Convert( paste0(merged_file_name,".h5seurat"), dest =  paste0(merged_file_name,".h5ad"),assay="RNA",verbose=TRUE,overwrite=TRUE)

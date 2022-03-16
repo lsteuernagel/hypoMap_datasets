@@ -101,21 +101,40 @@ message(" Detect batches within Dataset ")
 # source from functions:
 source("R/functions.R")
 
-seurat_newbatches= identifyBatches(seurat_object = seurat_processed,
+# TODO: add downsampling to not run into memory problems:
+if(ncol(seurat_processed) > parameter_list$downsampling_max){
+  downsampled_meta = scUtils::downsample_balanced_iterative(metadata = seurat_processed@meta.data,
+                                                            target_sample_size = parameter_list$downsampling_max,
+                                                            predictor_var = "preliminary_clusters",
+                                                            stepsize = 100,
+                                                            global_seed = parameter_list$global_seed)
+  seurat_processed_downsampled = subset(seurat_processed,cells = downsampled_meta[,1])
+}else{
+  seurat_processed_downsampled = seurat_processed
+}
+# run RF on downsampled data
+seurat_newbatches= identifyBatches(seurat_object = seurat_processed_downsampled,
                                    sample_variable = parameter_list$sample_column,
                                    cell_id = parameter_list$id_column,
                                    max_entropy = parameter_list$max_entropy_batch_detection,
-                                   trees= min(ncol(seurat_processed),parameter_list$trees_rf),
+                                   trees= min(ncol(seurat_processed_downsampled),parameter_list$trees_rf),
                                    n_cores = parameter_list$n_cores,
                                    n_dim = parameter_list$npcs_PCA,
                                    embedding_name = "pca",
                                    plotClustering =FALSE,
                                    plotEntropy=FALSE,
                                    seed=parameter_list$global_seed)
-batch_ids = paste0(parameter_list$dataset_name,seurat_newbatches$new_batch)
+
+# get per sample_id table to map back onto full processed object:
+batch_id_to_sample_id = as.data.frame(table(seurat_processed_downsampled@meta.data[,parameter_list$sample_column],seurat_newbatches$new_batch))[,1:2]
+colnames(batch_id_to_sample_id) = c(parameter_list$sample_column,"Batch_ID")
+batch_id_to_sample_id$Batch_ID = paste0(parameter_list$dataset_name,"_",batch_id_to_sample_id$Batch_ID)
+#batch_ids = paste0(parameter_list$dataset_name,seurat_newbatches$new_batch)
 
 # add new batches
-seurat_processed$Batch_ID = batch_ids
+temp_meta = dplyr::left_join(seurat_processed@meta.data,batch_id_to_sample_id)
+rownames(temp_meta) = temp_meta[,parameter_list$id_column]
+seurat_processed@meta.data = temp_meta
 
 ##########
 ### save as processed file

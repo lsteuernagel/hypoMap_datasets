@@ -29,6 +29,7 @@ param_list$nfeatures_vst_prelim = 1000
 param_list$npcs_PCA = 70
 param_list$k_param = 30
 param_list$resolutions_to_try = c(0.5, 0.75, 1, 1.5, 2:10)
+param_list$downsampling_max = 20000 # downsample to maximum of x cells to avoid mem overflow or very long run times during rf training
 param_list$max_entropy_batch_detection = 0.8 ## important !
 param_list$trees_rf = 20000
 
