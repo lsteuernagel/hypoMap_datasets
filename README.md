@@ -126,9 +126,27 @@ It looks like this:
 }
 ```
 
-TODO: Explain parameters.
+TODO: Explain parameters further.
 
 ### Preprocessing
 
-lorem ipsum
+This steps is executed using the script [R/run_scripts/preprocessing.R] and includes QC, a standard processing run as well as batch detection.
+
+Functions for this are part of the scUtils package or can be found in the [R/functions.R] file of this repository which will be sourced.
+
+### Doublet detection
+
+This steps is executed using the script [R/run_scripts/doublet_detection.R] and includes doublet detection per batch (as identified before) using [DoubletFinder](https://github.com/chris-mcginnis-ucsf/DoubletFinder).
+
+Doublets are only marked and not removed yet
+
+### Merging
+
+This steps is executed using the script [R/run_scripts/merge_datasets.R] and includes loading of all datasets, merging + initial processing (without integration) and saving or a merged version in the top level directory. Including a Seurat object in rds and h5Seurat format and an anndata object.
+
+TODO: Manual curation as last step!
+
+This steps is executed using the script [R/????]
+
+
 
