@@ -144,9 +144,12 @@ Doublets are only marked and not removed yet
 
 This steps is executed using the script [R/run_scripts/merge_datasets.R] and includes loading of all datasets, merging + initial processing (without integration) and saving or a merged version in the top level directory. Including a Seurat object in rds and h5Seurat format and an anndata object.
 
-TODO: Manual curation as last step!
+### Manual curation as last step
 
-This steps is executed using the script [R/????]
+This steps is executed using the script [R/subset_hypoMap_datasets] which is not part of any automated pipeline, but just a manual helper script used to do a preliminary clustering and some manual exploration. 
+Using this script additional doublet clusters are marked, some more problematic cells from various dataetes based on manual inspection are marked and then annotated in the column Final exclude. The resulting dataset is saved. Additionally a subset version is saved.
+
+
 
 
 
