@@ -64,7 +64,7 @@ seurat_processed = scUtils::seurat_recipe(seurat_raw,
                                           normalize_data = TRUE,
                                           remove_hvgs = TRUE,
                                           genes_to_remove = features_exclude_list,
-                                          calcUMAP = FALSE,
+                                          calcUMAP = TRUE,
                                           findClusters = TRUE,
                                           npcs_PCA = parameter_list$npcs_PCA,
                                           clusterRes = 1,
@@ -118,6 +118,7 @@ seurat_newbatches= identifyBatches(seurat_object = seurat_processed_downsampled,
                                    cell_id = parameter_list$id_column,
                                    max_entropy = parameter_list$max_entropy_batch_detection,
                                    trees= min(ncol(seurat_processed_downsampled),parameter_list$trees_rf),
+                                   sampsize_pct=parameter_list$sampsize_pct,
                                    n_cores = parameter_list$n_cores,
                                    n_dim = parameter_list$npcs_PCA,
                                    embedding_name = "pca",
@@ -138,14 +139,15 @@ temp_meta = dplyr::left_join(seurat_processed@meta.data,batch_id_to_sample_id)
 rownames(temp_meta) = temp_meta[,parameter_list$id_column]
 seurat_processed@meta.data = temp_meta
 
+
 ##########
 ### save as processed file
 ##########
-message(" Save processed file ")
+message(" Save processed file using path from: ",parameter_list$raw_file)
 
 # get folder from raw file
 split_by_slash = strsplit(parameter_list$raw_file,split = "/")[[1]]
-target_dir = paste0(split_by_slash[1:min(1,(length(split_by_slash)-1))],collapse = "/")
+target_dir = paste0(split_by_slash[1:max(1,(length(split_by_slash)-1))],collapse = "/")
 
 # save
 output_file = paste0(parameter_list$data_path,target_dir,"/",parameter_list$dataset_name,parameter_list$processed_suffix,".rds")

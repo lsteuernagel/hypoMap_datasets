@@ -179,10 +179,40 @@ saveRDS(hypoMap_merged_raw,file = paste0(global_parameters$data_path,"hypoMap_me
 # save filtered
 saveRDS(hypoMap_merged_raw_subset,file = paste0(global_parameters$data_path,"hypoMap_merged_filtered.rds"))
 
+##########
+### save QC plots
+##########
+
+qc_dir = paste0(parameter_list$qc_path,parameter_list$dataset_name,"/")
+system(paste0("mkdir -p ",paste0(qc_dir)))
+columns_to_plot = c("Doublet","Author_Exclude","Batch_ID","preliminary_clusters")
+
+for(column_to_plot %in% columns_to_plot){
+  if(column_to_plot %in% colnames(seurat_processed@meta.data)){
+    p1 = Seurat::DimPlot(object = seurat_processed,group.by = column_to_plot)
+    if(length(unique(seurat_processed@meta.data[,column_to_plot]))>10){
+      p1 = Seurat::DimPlot(object = seurat_processed,group.by = column_to_plot,label=TRUE)+NoLegend()
+    }
+    p1r = scUtils::rasterize_ggplot(p1,pixel_raster = 2048)
+    ggsave(filename = paste0(qc_dir,parameter_list$dataset_name,"_",column_to_plot,".png"),
+           plot = p1r, "png",dpi=600,width=300,height = 300,units="mm")
+    ggsave(filename = paste0(qc_dir,parameter_list$dataset_name,"_",column_to_plot,".pdf"),
+           plot = p1r, "pdf",dpi=600,width=300,height = 300,units="mm")
+  }
+}
+
 
 ##########
 ## old:
 ##########
+
+# library(magrittr)
+# metadata_df = hypoMap_merged_raw@meta.data %>% as.data.frame()
+# metadata_df=metadata_df[,c("Cell_ID","Dataset","Sample_ID","SRA_ID","Batch_ID","Processing_clusters","Author_Exclude","Doublet","Final_Doublet","Final_Exclude")]
+# data.table::fwrite(metadata_df,file = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/hypoMap_merged_raw_finalAnnotation_metadata.txt",sep="\t")
+
+
+
 #
 # # 161 yes, 135yes, 111 no, 95 no, 98 no
 # # 90 , 64 no

@@ -64,5 +64,7 @@ scUtils::writeList_to_JSON(features_exclude_list,filename = "/beegfs/scratch/bru
 scUtils::writeList_to_JSON(features_exclude_list,filename = "data/features_exclude_list_all.json")
 
 ## write specific
+hvgs_exclude_long_extra = c(hvgs_exclude_long_extra,c('PISD','DHRSX','Vmn2r122','CAAA01147332.1','EYFP','mCherry','preSeq','preSeq2','tdTomato','retroHSV'))
 scUtils::writeList_to_JSON(hvgs_exclude_long_extra,filename = "data/features_exclude_list.json")
+
 

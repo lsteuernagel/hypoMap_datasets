@@ -49,13 +49,13 @@ merged_seurat <- Seurat::NormalizeData(object = merged_seurat,  verbose = F, ass
 
 # find HVGs
 merged_seurat = scUtils::identify_variable_features(merged_seurat,
-                                          n_hvgs_sizes = parameter_list$feature_set_sizes,
-                                          batch_var = parameter_list$sample_column,
-                                          assay_name = "RNA",
-                                          method = "vst",
-                                          ignore_genes_vector = features_exclude_list,
-                                          returnSeurat = TRUE,
-                                          seed = parameter_list$global_seed)
+                                                    n_hvgs_sizes = parameter_list$feature_set_sizes,
+                                                    batch_var = parameter_list$sample_column,
+                                                    assay_name = "RNA",
+                                                    method = "vst",
+                                                    ignore_genes_vector = features_exclude_list,
+                                                    returnSeurat = TRUE,
+                                                    seed = parameter_list$global_seed)
 ##########
 ### Run basic processing (without integration)
 ##########
@@ -63,17 +63,43 @@ merged_seurat = scUtils::identify_variable_features(merged_seurat,
 message(" Add basic processing ")
 
 merged_seurat = scUtils::seurat_recipe(merged_seurat,
-                                          nfeatures_vst = parameter_list$nfeatures_vst_prelim,
-                                          sample_column = "Batch_ID",
-                                          normalize_data = TRUE,
-                                          remove_hvgs = TRUE,
-                                          genes_to_remove = features_exclude_list,
-                                          calcUMAP = TRUE,
-                                          findClusters = TRUE,
-                                          npcs_PCA = parameter_list$npcs_PCA,
-                                          clusterRes = 2,
-                                          k.param = parameter_list$k_param,
-                                          seed = parameter_list$global_seed)
+                                       nfeatures_vst = parameter_list$nfeatures_vst_prelim,
+                                       sample_column = "Batch_ID",
+                                       normalize_data = TRUE,
+                                       remove_hvgs = TRUE,
+                                       genes_to_remove = features_exclude_list,
+                                       calcUMAP = TRUE,
+                                       findClusters = TRUE,
+                                       npcs_PCA = parameter_list$npcs_PCA,
+                                       clusterRes = 2,
+                                       k.param = parameter_list$k_param,
+                                       seed = parameter_list$global_seed)
+
+##########
+### save QC plots
+##########
+
+library(ggplot2)
+
+qc_dir = paste0(parameter_list$qc_path,"/")
+system(paste0("mkdir -p ",paste0(qc_dir)))
+columns_to_plot = c("Doublet","Author_Exclude","Batch_ID","seurat_clusters","Dataset")
+
+for(column_to_plot in columns_to_plot){
+  if(column_to_plot %in% colnames(merged_seurat@meta.data)){
+    if(length(unique(merged_seurat@meta.data[,column_to_plot]))>10){
+      p1 = Seurat::DimPlot(object = merged_seurat,group.by = column_to_plot,label=TRUE)+NoLegend()
+    }else{
+      p1 = Seurat::DimPlot(object = merged_seurat,group.by = column_to_plot)
+    }
+    p1r = scUtils::rasterize_ggplot(p1,pixel_raster = 2048)
+    ggplot2::ggsave(filename = paste0(qc_dir,"merged","_",column_to_plot,".png"),
+           plot = p1r, "png",dpi=600,width=300,height = 300,units="mm")
+    ggplot2::ggsave(filename = paste0(qc_dir,"merged","_",column_to_plot,".pdf"),
+           plot = p1r, "pdf",dpi=600,width=300,height = 300,units="mm")
+  }
+}
+
 
 ##########
 ### save merged object

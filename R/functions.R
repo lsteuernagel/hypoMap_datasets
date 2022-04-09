@@ -17,6 +17,7 @@ writeList_to_JSON = function (list_with_rows, filename)
 #' @param cell_id
 #' @param max_entropy
 #' @param trees
+#' @param sampsize_pct
 #' @param n_cores
 #' @param n_dim
 #' @param embedding_name
@@ -26,7 +27,7 @@ writeList_to_JSON = function (list_with_rows, filename)
 #' @return list with new_batch_labels, clustering and entrop results
 
 ## be sure that Cell_ID and assay rownames are identical !!!!
-identifyBatches = function(seurat_object ,  sample_variable = "Sample_ID", cell_id = "Cell_ID", max_entropy = 0.9 ,trees= 1000, n_cores = 10,n_dim = 50,embedding_name = "pca",plotClustering =FALSE,plotEntropy=TRUE,seed=1234){
+identifyBatches = function(seurat_object ,  sample_variable = "Sample_ID", cell_id = "Cell_ID", max_entropy = 0.9 ,trees= 1000,sampsize_pct=0.632, n_cores = 10,n_dim = 50,embedding_name = "pca",plotClustering =FALSE,plotEntropy=TRUE,seed=1234){
 
   require(tidyverse)
   require(stringr)
@@ -181,7 +182,7 @@ cut_batches = function(all_entropies_unsorted,max_entropy=0.9,hc,seurat_object,s
 # current labels
 # trees
 # ncores
-rf_classProbabilities = function(train_predictors,train_response,trees=500,n_cores=4,seed1=123){
+rf_classProbabilities = function(train_predictors,train_response,trees=500,sampsize_pct=0.632,n_cores=4,seed1=123){
 
   require(tidyverse)
   require(randomForest)
@@ -193,7 +194,7 @@ rf_classProbabilities = function(train_predictors,train_response,trees=500,n_cor
   registerDoParallel(cores=n_cores)
   rf_res <- foreach(ntree=rep(trees/n_cores, n_cores), .combine=randomForest::combine,.multicombine=TRUE, .packages='randomForest') %dopar% {
     set.seed(seed1)
-    randomForest(x=train_predictors, y=as.factor(train_response), ntree=ntree)
+    randomForest(x=train_predictors, y=as.factor(train_response), ntree=ntree,sampsize=ceiling(sampsize_pct*nrow(train_predictors)))
   }
   # obtain class probabilities
   votes = rf_res$votes / n_cores

@@ -15,7 +15,7 @@ log_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/slurm/hypoMap_v2_slurm
 dataset_table = data.table::fread("data/dataset_overview.tsv",data.table = FALSE)
 
 # load json file with all other information
-params_pre_processing = jsonlite::read_json("data/parameters_pre_processing_v2_1.json")
+params_pre_processing = jsonlite::read_json("data/parameters_pre_processing_v2_2.json")
 # if some fields are lists --> unlist
 params_pre_processing = lapply(params_pre_processing,function(x){if(is.list(x)){return(unlist(x))}else{return(x)}})
 

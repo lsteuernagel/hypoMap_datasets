@@ -49,17 +49,17 @@ for(i in 1:length(seurat_object_batch_list)){
   # run preprocessing for the current batch
   # we remove unwanted genes beforehand so that doublet fidner won't use them --> also exclude below
   current_seurat_new = scUtils::seurat_recipe(current_seurat_new,
-                                            nfeatures_vst = parameter_list$nfeatures_vst_prelim,
-                                          #  sample_column = parameter_list$sample_column,
-                                            normalize_data = TRUE,
-                                            remove_hvgs = FALSE,
-                                         #   genes_to_remove = features_exclude_list,
-                                            calcUMAP = FALSE,
-                                            findClusters = TRUE,
-                                            npcs_PCA = parameter_list$npcs_PCA,
-                                            clusterRes = 1,
-                                            k.param = parameter_list$k_param,
-                                            seed = parameter_list$global_seed)
+                                              nfeatures_vst = parameter_list$nfeatures_vst_prelim,
+                                              #  sample_column = parameter_list$sample_column,
+                                              normalize_data = TRUE,
+                                              remove_hvgs = FALSE,
+                                              #   genes_to_remove = features_exclude_list,
+                                              calcUMAP = FALSE,
+                                              findClusters = TRUE,
+                                              npcs_PCA = parameter_list$npcs_PCA,
+                                              clusterRes = 1,
+                                              k.param = parameter_list$k_param,
+                                              seed = parameter_list$global_seed)
 
   # run doublet detection
   current_seurat_new = scUtils::apply_DoubletFinder( # scUtils::
@@ -91,6 +91,31 @@ seurat_processed@meta.data = meta_temp
 
 # add to Exclude column
 seurat_processed@meta.data$Process_Exclude[seurat_processed@meta.data$Doublet %in% "Doublet"] = "yes"
+
+
+##########
+### save QC plots
+##########
+
+library(ggplot2)
+
+qc_dir = paste0(parameter_list$qc_path,parameter_list$dataset_name,"/")
+system(paste0("mkdir -p ",paste0(qc_dir)))
+columns_to_plot = c("Doublet","Author_Exclude","Batch_ID","preliminary_clusters")
+
+for(column_to_plot in columns_to_plot){
+  if(column_to_plot %in% colnames(seurat_processed@meta.data)){
+    p1 = Seurat::DimPlot(object = seurat_processed,group.by = column_to_plot)
+    if(length(unique(seurat_processed@meta.data[,column_to_plot]))>10){
+      p1 = Seurat::DimPlot(object = seurat_processed,group.by = column_to_plot,label=TRUE)+NoLegend()
+    }
+    p1r = scUtils::rasterize_ggplot(p1,pixel_raster = 2048)
+    ggplot2::ggsave(filename = paste0(qc_dir,parameter_list$dataset_name,"_",column_to_plot,".png"),
+           plot = p1r, "png",dpi=600,width=300,height = 300,units="mm")
+    ggplot2::ggsave(filename = paste0(qc_dir,parameter_list$dataset_name,"_",column_to_plot,".pdf"),
+           plot = p1r, "pdf",dpi=600,width=300,height = 300,units="mm")
+  }
+}
 
 ##########
 ### save as processed file
