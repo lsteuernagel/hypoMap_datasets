@@ -31,7 +31,7 @@ param_list$npcs_PCA = 70
 param_list$k_param = 30
 param_list$resolutions_to_try = c(0.5, 0.75, 1, 1.5, 2:10)
 param_list$downsampling_max = 20000 # downsample to maximum of x cells to avoid mem overflow or very long run times during rf training
-param_list$max_entropy_batch_detection = 0.85 ## important !
+param_list$max_entropy_batch_detection = 0.875 ## important !
 param_list$trees_rf = 20000
 param_list$sampsize_pct = 0.5
 
@@ -43,4 +43,3 @@ param_list$min_avg_cells_cluster = 200 # to avoid accientally overclustering sma
 
 # save
 scUtils::writeList_to_JSON(param_list,filename = "data/parameters_pre_processing_v2_2.json")
-

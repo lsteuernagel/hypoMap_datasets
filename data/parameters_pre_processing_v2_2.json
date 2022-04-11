@@ -21,7 +21,7 @@
   "k_param": 30,
   "resolutions_to_try": [0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   "downsampling_max": 20000,
-  "max_entropy_batch_detection": 0.85,
+  "max_entropy_batch_detection": 0.875,
   "trees_rf": 20000,
   "sampsize_pct": 0.5,
   "pN_fixed": 0.25,

@@ -25,7 +25,7 @@ system(paste0("mkdir -p ",paste0(param_path)))
 system(paste0("mkdir -p ",paste0(log_path)))
 
 # for tests:
-#dataset_table = dataset_table[dataset_table$Dataset %in% c("kimDev10x","LeeDropseq","wen10x","RomanovDev10x"),]
+dataset_table = dataset_table[dataset_table$Dataset %in% c("kimDev10x","Dowsett10xnuc","Kim10x")|grepl("Drop",dataset_table$Dataset),]
 
 ##########
 ### [1] Run pre-processing and batch id job for each dataset

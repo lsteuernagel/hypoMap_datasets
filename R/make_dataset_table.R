@@ -34,13 +34,16 @@ data_set_table$exclude_author[data_set_table$Dataset == "Dowsett10xnuc"] = TRUE
 data_set_table$exclude_author[data_set_table$Dataset == "Kim10x"] = TRUE
 data_set_table$exclude_author[data_set_table$Dataset == "Moffit10x"] = TRUE
 
-# manually set target doublet rate:
+# set formation rate to 5% for 10x
 data_set_table$doublet_formation_rate = 0.05
-data_set_table$doublet_formation_rate[data_set_table$Dataset == "Dowsett10xnuc"] = 0.02
-data_set_table$doublet_formation_rate[data_set_table$Dataset == "Kim10x"] = 0.02
+# set formation rate to 1% for dropseq
+data_set_table$doublet_formation_rate[grepl("Drop",data_set_table$Dataset)] = 0.01
+# manually set target doublet rate for some pre-prrocessed data:
+data_set_table$doublet_formation_rate[data_set_table$Dataset == "Dowsett10xnuc"] = 0.01
+data_set_table$doublet_formation_rate[data_set_table$Dataset == "Kim10x"] = 0.01
 #also some of the maller ones:
-data_set_table$doublet_formation_rate[data_set_table$Dataset == "kimDev10x"] = 0.02
-data_set_table$doublet_formation_rate[data_set_table$Dataset == "LeeDropseq"] = 0.02
+data_set_table$doublet_formation_rate[data_set_table$Dataset == "kimDev10x"] = 0.01
+#data_set_table$doublet_formation_rate[data_set_table$Dataset == "LeeDropseq"] = 0.02
 #data.table::fread("/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/")
 
 # save

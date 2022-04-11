@@ -75,30 +75,7 @@ merged_seurat = scUtils::seurat_recipe(merged_seurat,
                                        k.param = parameter_list$k_param,
                                        seed = parameter_list$global_seed)
 
-##########
-### save QC plots
-##########
 
-library(ggplot2)
-
-qc_dir = paste0(parameter_list$qc_path,"/")
-system(paste0("mkdir -p ",paste0(qc_dir)))
-columns_to_plot = c("Doublet","Author_Exclude","Batch_ID","seurat_clusters","Dataset")
-
-for(column_to_plot in columns_to_plot){
-  if(column_to_plot %in% colnames(merged_seurat@meta.data)){
-    if(length(unique(merged_seurat@meta.data[,column_to_plot]))>10){
-      p1 = Seurat::DimPlot(object = merged_seurat,group.by = column_to_plot,label=TRUE)+NoLegend()
-    }else{
-      p1 = Seurat::DimPlot(object = merged_seurat,group.by = column_to_plot)
-    }
-    p1r = scUtils::rasterize_ggplot(p1,pixel_raster = 2048)
-    ggplot2::ggsave(filename = paste0(qc_dir,"merged","_",column_to_plot,".png"),
-           plot = p1r, "png",dpi=600,width=300,height = 300,units="mm")
-    ggplot2::ggsave(filename = paste0(qc_dir,"merged","_",column_to_plot,".pdf"),
-           plot = p1r, "pdf",dpi=600,width=300,height = 300,units="mm")
-  }
-}
 
 
 ##########
@@ -122,6 +99,29 @@ SeuratDisk::Convert( paste0(merged_file_name,".h5seurat"), dest =  paste0(merged
 message(" Complete ")
 
 
+##########
+### save QC plots
+##########
 
+library(ggplot2)
 
+qc_dir = paste0(parameter_list$qc_path,"/")
+system(paste0("mkdir -p ",paste0(qc_dir)))
+columns_to_plot = c("Doublet","Author_Exclude","Batch_ID","seurat_clusters","Dataset")
 
+for(column_to_plot in columns_to_plot){
+  if(column_to_plot %in% colnames(merged_seurat@meta.data)){
+    if(length(unique(merged_seurat@meta.data[,column_to_plot]))>10){
+      p1 = Seurat::DimPlot(object = merged_seurat,group.by = column_to_plot,label=TRUE,raster = FALSE)+NoLegend()
+    }else{
+      p1 = Seurat::DimPlot(object = merged_seurat,group.by = column_to_plot,raster = FALSE)
+    }
+    p1r = scUtils::rasterize_ggplot(p1,pixel_raster = 2048)
+    ggplot2::ggsave(filename = paste0(qc_dir,"merged","_",column_to_plot,".png"),
+                    plot = p1r, "png",dpi=600,width=300,height = 300,units="mm")
+    ggplot2::ggsave(filename = paste0(qc_dir,"merged","_",column_to_plot,".pdf"),
+                    plot = p1r, "pdf",dpi=600,width=300,height = 300,units="mm")
+  }
+}
+
+message(" Complete with plots")

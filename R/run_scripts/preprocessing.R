@@ -132,6 +132,7 @@ colnames(batch_id_to_sample_id)[1:2] = c(parameter_list$sample_column,"Batch_ID"
 batch_id_to_sample_id$Batch_ID = paste0(parameter_list$dataset_name,"_",batch_id_to_sample_id$Batch_ID)
 batch_id_to_sample_id = batch_id_to_sample_id[batch_id_to_sample_id$Freq > 0,]
 batch_id_to_sample_id = batch_id_to_sample_id %>% dplyr::distinct(!!rlang::sym(parameter_list$sample_column),Batch_ID)
+print(batch_id_to_sample_id)
 #batch_ids = paste0(parameter_list$dataset_name,seurat_newbatches$new_batch)
 
 # add new batches
