@@ -8,12 +8,16 @@
 # - additionally I remove some more rpl and cox genes
 # - additionally I compile a list of genes that are expressed only in 4 or less of the original datasets in hypoMap v1 and exclude those as well
 
+# feat_ex = unlist(jsonlite::read_json("data/features_exclude_list2.json"))
+# feat_ex[grepl("Rps27l",feat_ex)]
+# hvgs_exclude_long[grepl("Rps27l",hvgs_exclude_long)]
+
 library(magrittr)
 library(Seurat)
 
 # example seurat:
-raw_data_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/ChenDropseq/"
-seurat_raw_name = "ChenDropseq_seurat_raw.rds"
+raw_data_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap_rawdata/RomanovDev10x/"
+seurat_raw_name = "RomanovDev10x_seurat_raw.rds"
 seurat_raw = readRDS(paste0(raw_data_path,seurat_raw_name))
 
 # load genes from kim et al: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7534821/#S15
@@ -27,7 +31,7 @@ regex_based_genes = rownames(seurat_raw)[grepl(ignore_genes_regex,rownames(seura
 hvgs_exclude_small = c(hvg_exclude_kim_et_al$`Sex-specific`,hvg_exclude_kim_et_al$IEGs,hvg_exclude_kim_et_al$`retro-virus-induced`) %>% na.omit() %>% as.character()
 hvgs_exclude_small = hvgs_exclude_small[hvgs_exclude_small %in% rownames(seurat_raw)]
 # make longer list with ethri 1000 genes
-hvgs_exclude_long= unique(c(hvgs_exclude_small,hvg_exclude_kim_et_al$`noise-sensitive`),regex_based_genes)
+hvgs_exclude_long= unique(c(hvgs_exclude_small,hvg_exclude_kim_et_al$`noise-sensitive`,regex_based_genes))
 
 
 ## load hypothalamus and check genes that are very specific for one dataset
@@ -54,17 +58,19 @@ exclude_genes_occurence = per_dataset_occ_min$gene[per_dataset_occ_min$occ<=5]
 #make an extra long list
 hvgs_exclude_long_extra = unique(c(hvgs_exclude_long,exclude_genes_occurence))
 
+hvgs_exclude_long_extra = c(hvgs_exclude_long_extra,c('Bc1','Lars2','CT010467.1'))
+hvgs_exclude_long_extra = c(hvgs_exclude_long_extra,c('PISD','DHRSX','Vmn2r122','CAAA01147332.1','EYFP','mCherry','preSeq','preSeq2','tdTomato','retroHSV'))
+
 # make lists
 features_exclude_list = list(
   hvgs_exclude_small = hvgs_exclude_small,
   hvgs_exclude_long = hvgs_exclude_long,
   hvgs_exclude_long_extra = hvgs_exclude_long_extra
 )
-scUtils::writeList_to_JSON(features_exclude_list,filename = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap/features_exclude_list.json")
-scUtils::writeList_to_JSON(features_exclude_list,filename = "data/features_exclude_list_all.json")
+scUtils::writeList_to_JSON(features_exclude_list,filename = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/hypoMap/features_exclude_list2.json")
+scUtils::writeList_to_JSON(features_exclude_list,filename = "data/features_exclude_list_all2.json")
 
 ## write specific
-hvgs_exclude_long_extra = c(hvgs_exclude_long_extra,c('PISD','DHRSX','Vmn2r122','CAAA01147332.1','EYFP','mCherry','preSeq','preSeq2','tdTomato','retroHSV'))
-scUtils::writeList_to_JSON(hvgs_exclude_long_extra,filename = "data/features_exclude_list.json")
+scUtils::writeList_to_JSON(hvgs_exclude_long_extra,filename = "data/features_exclude_list2.json")
 
 

@@ -208,6 +208,7 @@ saveRDS(hypoMap_merged_raw,file = paste0(global_parameters$data_path,"hypoMap_me
 # save filtered
 saveRDS(hypoMap_merged_raw_subset,file = paste0(global_parameters$data_path,"hypoMap_merged_filtered.rds"))
 
+
 ##########
 ### save QC plots
 ##########
@@ -333,10 +334,10 @@ for(column_to_plot in columns_to_plot){
 # p1r = scUtils::rasterize_ggplot(p1,pixel_raster = 1596)
 # p1r
 #
-cellsh = hypoMap_merged_raw@meta.data$Cell_ID[hypoMap_merged_raw@meta.data$Processing_clusters=="45"]
-#cellsh = hypoMap_merged_raw@meta.data$Cell_ID[hypoMap_merged_raw@meta.data$Dataset=="Anderson10x"  & hypoMap_merged_raw@meta.data$Doublet =="Doublet"]
-p1= DimPlot(hypoMap_merged_raw,group.by = "Phase",raster = F,shuffle = TRUE,cells.highlight = cellsh,sizes.highlight = 0.1)
-p1r = scUtils::rasterize_ggplot(p1,pixel_raster = 1596)
-p1r
+# cellsh = hypoMap_merged_raw@meta.data$Cell_ID[hypoMap_merged_raw@meta.data$Processing_clusters=="45"]
+# #cellsh = hypoMap_merged_raw@meta.data$Cell_ID[hypoMap_merged_raw@meta.data$Dataset=="Anderson10x"  & hypoMap_merged_raw@meta.data$Doublet =="Doublet"]
+# p1= DimPlot(hypoMap_merged_raw,group.by = "Phase",raster = F,shuffle = TRUE,cells.highlight = cellsh,sizes.highlight = 0.1)
+# p1r = scUtils::rasterize_ggplot(p1,pixel_raster = 1596)
+# p1r
 #
 # table(hypoMap_merged_raw@meta.data$Dataset[hypoMap_merged_raw@meta.data$Processing_clusters=="49"])
